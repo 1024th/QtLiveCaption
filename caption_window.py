@@ -1,25 +1,28 @@
 import itertools
 from typing import Optional
+
+from PyQt6.QtCore import QPoint, Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import (
+    QCloseEvent,
+    QCursor,
+    QFont,
+    QFontMetrics,
+    QMouseEvent,
+    QPainter,
+    QResizeEvent,
+)
 from PyQt6.QtWidgets import (
     QApplication,
-    QMainWindow,
-    QLabel,
-    QPushButton,
-    QGraphicsDropShadowEffect,
     QFrame,
+    QGraphicsDropShadowEffect,
+    QLabel,
+    QMainWindow,
+    QPushButton,
     QSizePolicy,
     QVBoxLayout,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer, QPoint
-from PyQt6.QtGui import (
-    QFont,
-    QCloseEvent,
-    QCursor,
-    QMouseEvent,
-    QResizeEvent,
-    QPainter,
-    QFontMetrics,
-)
+
+from scrolling_label import ScrollingLabel
 
 __all__ = ["CaptionWindow", "CaptionUpdaterThread", "connect_caption_thread"]
 
@@ -116,14 +119,18 @@ class CaptionWindow(QMainWindow):
         self.setCentralWidget(self.bg_widget)
 
         # Create caption label with elide support
-        self.caption_label = ElidedLabel(
-            Qt.TextElideMode.ElideLeft,
-            "Caption text will appear here.",
-            self.bg_widget,
+        # self.caption_label = ElidedLabel(
+        #     Qt.TextElideMode.ElideLeft,
+        #     "Caption text will appear here.",
+        #     self.bg_widget,
+        # )
+        self.caption_label = ScrollingLabel(
+            font=QFont("sans-serif", self.font_size),
+            visible_lines=2,
+            line_height_multiplier=1.2,
+            parent=self.bg_widget,
         )
         self.caption_label.setMouseTracking(True)
-        self.caption_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.caption_label.setWordWrap(True)
         self.caption_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -224,9 +231,11 @@ class CaptionWindow(QMainWindow):
 
         return edges
 
-    def update_caption_display(self, new_caption: str) -> None:
+    def update_caption_display(
+        self, new_caption: str, is_new_content: bool = False
+    ) -> None:
         """Thread-safe method to update caption display."""
-        self.caption_label.setText(new_caption)
+        self.caption_label.set_text(new_caption, is_new_content)
         # self.update_label_alignment()
 
     def closeEvent(self, event: QCloseEvent) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -351,3 +360,6 @@ def connect_caption_thread(window: CaptionWindow, thread: CaptionUpdaterThread) 
     window.caption_thread = thread
     # Connect the thread's signal to the window's update method
     thread.caption_updated.connect(window.caption_updated)
+
+    # Close the window when the thread finishes
+    thread.finished.connect(window.close)

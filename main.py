@@ -51,7 +51,6 @@ class GummyCaptionThread(CaptionUpdaterThread):
                 self.caption_updater.update_caption(transcription_result.text)
 
     def run(self) -> None:
-        self.audio_stream.open_stream()
         callback = self.Callback(self)
 
         engine = TranslationRecognizerRealtime(
@@ -67,13 +66,20 @@ class GummyCaptionThread(CaptionUpdaterThread):
             callback=callback,
         )
         engine.start()
+        # print("Engine started, time: ", time.time())
+        self.audio_stream.open_stream()
+        # print("Audio stream opened, time: ", time.time())
+        # import threading
+        # print("Main thread id: ", threading.get_ident())
+        # print(threading.enumerate())
+
         print("Voice recognition started...")
         while True:
             if self.isInterruptionRequested():
                 break
             data = self.audio_stream.read_chunk()
 
-            print(f"Read audio chunk, time: {time.time()}")
+            # print(f"Read audio chunk, time: {time.time()}")
             if data:
                 engine.send_audio_frame(data)
             else:
