@@ -3,7 +3,7 @@ from typing import Optional
 
 
 DEFAULT_SAMPLE_RATE = 16000
-DEFAULT_CHUNK_RATE = 10
+DEFAULT_CHUNK_RATE = 8
 
 
 class AudioStream(ABC):
